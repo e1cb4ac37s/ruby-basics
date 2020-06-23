@@ -22,7 +22,8 @@ if d < 0
 elsif d == 0
   puts "Корень один, и он равен #{-b / (2 * a)}"
 else
+  sqrtD = Math.sqrt(d)
   puts 'Корни этого уравнения:'
-  puts "1) #{(-b + Math.sqrt(d)) / (2 * a)}"
-  puts "2) #{(-b - Math.sqrt(d)) / (2 * a)}"
+  puts "1) #{(-b + sqrtD) / (2 * a)}"
+  puts "2) #{(-b - sqrtD) / (2 * a)}"
 end
