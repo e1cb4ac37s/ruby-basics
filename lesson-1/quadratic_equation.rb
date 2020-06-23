@@ -16,6 +16,7 @@ c = gets.chomp.to_f
 
 d = b ** 2 - 4 * a * c
 
+puts "Дискриминант: #{d}"
 if d < 0
   puts 'Корней нет'
 elsif d == 0
