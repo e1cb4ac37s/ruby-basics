@@ -1,4 +1,6 @@
-def get_products_list
+# frozen_string_literal: true
+
+def prompt_products_list
   i = 1
   hash = {}
   puts 'Введите список купленных товаров (введите "стоп" для прекращения) в формате "название цена количество":'
@@ -6,21 +8,22 @@ def get_products_list
     print "#{i}: "
     input = gets.chomp
     break if input == 'стоп'
-    name, price, quantity = input.split(' ')
-    price, quantity = price.to_f, quantity.to_f
+
+    name, price_prompt, quantity_prompt = input.split(' ')
+    price = price_prompt.to_f
+    quantity = quantity_prompt.to_f
     hash[name] = { price => quantity }
     i += 1
   end
   hash
 end
 
-def total_by_product products
-  products.inject ({}) do |acc, (k, v)|
-    acc[k] = v.inject (1) {|acc, (k, v)| acc = (k * v).round(2) }
-    acc
+def total_by_product(products)
+  products.each_with_object({}) do |(k, v), acc|
+    acc[k] = v.inject(1) { |_, (k, v)| (k * v).round(2) }
   end
 end
 
-def total products
-  total_by_product(products).inject (0) { |acc, (k, v)| acc += v }
+def total(products)
+  total_by_product(products).inject(0) { |acc, (_, v)| acc + v }
 end

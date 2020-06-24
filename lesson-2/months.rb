@@ -1,4 +1,6 @@
-def get_months is_leap_year = false
+# frozen_string_literal: true
+
+def get_months(is_leap_year = false)
   {
     январь: 31,
     февраль: is_leap_year ? 29 : 28,
