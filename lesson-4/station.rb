@@ -1,6 +1,14 @@
 class Station
   attr_reader :trains, :name
 
+  def self.stringify_stations(stations)
+    return 'Список станций пуст.' if stations.empty?
+
+    stations.inject('') do |acc, station|
+      "#{acc}Название: #{station.name}. Поезда: #{Train.stringify_trains(station.trains)}.\n"
+    end
+  end
+
   def initialize(name)
     @name = name
     @trains = []
@@ -14,8 +22,8 @@ class Station
     @trains.delete(train)
   end
 
-  def freight_trains
-    selection = trains.select { |t| t.type == 'freight' }
+  def cargo_trains
+    selection = trains.select { |t| t.type == 'cargo' }
     {
       trains: selection,
       count: selection.size

@@ -1,11 +1,18 @@
 class Train
-  attr_reader :number, :type, :speed, :wagons, :prev_station, :current_station, :next_station
+  attr_reader :number, :type, :speed, :prev_station, :current_station, :next_station
 
-  def initialize(number, type, wagons)
+  def self.stringify_trains(trains)
+    "[#{trains.inject { |string, t| "#{string}, #{t}" }}]"
+  end
+
+  def initialize(number)
     @speed = 0
     @number = number
-    @type = type
-    @wagons = wagons
+    @wagons = []
+  end
+
+  def to_s
+    "#{@number} (#{@type})-#{wagons_string}"
   end
 
   def speed_up(diff)
@@ -16,19 +23,24 @@ class Train
     @speed = 0
   end
 
-  def hitch_wagon
+  def hitch_wagon(wagon)
+    if wagon.type != @type
+      puts 'Тип вагона не соответствует типу поезда...'
+      return
+    end
+
     if speed.zero?
-      @wagons += 1
+      @wagons << wagon
     else
-      puts 'Stop the train before hitching any wagons!'
+      puts 'Остановите поезд, прежде чем прицеплять вагоны...'
     end
   end
 
   def uncouple_wagon
-    if speed.zero? && @wagons >= 1
-      @wagons -= 1
+    if speed.zero? && @wagons.any?
+      @wagons.pop
     else
-      puts 'Stop the train before uncoupling any wagons! Or maybe train has not any wagons...'
+      puts 'Остановите поезд, прежде чем отцеплять вагоны. Или вагонов нет...'
     end
   end
 
@@ -42,7 +54,14 @@ class Train
   end
 
   def move_to_next
-    return 'You are already at end station' unless @next_station
+    unless @route
+      puts 'Поезд не привязан к маршруту.'
+      return
+    end
+    unless @next_station
+      puts 'Поезд уже на конечной станции.'
+      return
+    end
 
     @current_station.send_train(self)
 
@@ -56,7 +75,14 @@ class Train
   end
 
   def move_to_prev
-    return 'You are already at start station' unless @prev_station
+    unless @route
+      puts 'Поезд не привязан к маршруту.'
+      return
+    end
+    unless @next_station
+      puts 'Поезд уже на начальной станции.'
+      return
+    end
 
     @current_station.send_train(self)
 
@@ -67,5 +93,11 @@ class Train
     @current_station.accept_train(self)
 
     @prev_station = @current_station_index.zero? ? nil : @route.stations[@current_station_index - 1]
+  end
+
+  private
+
+  def wagons_string
+    @wagons.empty? ? '[]' : "[#{@wagons.map { |_| '.' }.join}]"
   end
 end
