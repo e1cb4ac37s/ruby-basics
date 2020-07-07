@@ -1,14 +1,25 @@
 class Train
+  include Manufacturer
+  include InstanceCounter
+
   attr_reader :number, :type, :speed, :prev_station, :current_station, :next_station
+
+  @@trains = {}
 
   def self.stringify_trains(trains)
     "[#{trains.inject { |string, t| "#{string}, #{t}" }}]"
+  end
+
+  def self.find(number)
+    @@trains[number]
   end
 
   def initialize(number)
     @speed = 0
     @number = number
     @wagons = []
+    @@trains[number] = self
+    register_instance
   end
 
   def to_s

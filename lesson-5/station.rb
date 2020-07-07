@@ -1,5 +1,13 @@
 class Station
+  include InstanceCounter
+
   attr_reader :trains, :name
+
+  @@stations = []
+
+  def self.all
+    @@stations
+  end
 
   def self.stringify_stations(stations)
     return 'Список станций пуст.' if stations.empty?
@@ -12,6 +20,8 @@ class Station
   def initialize(name)
     @name = name
     @trains = []
+    @@stations << self
+    register_instance
   end
 
   def accept_train(train)

@@ -1,4 +1,6 @@
 class Route
+  include InstanceCounter
+
   attr_reader :start_station, :end_station
 
   def self.stringify_routes(routes)
@@ -9,6 +11,7 @@ class Route
     @start_station = start_station
     @end_station = end_station
     @intermediates = []
+    register_instance
   end
 
   def add_station(station)
