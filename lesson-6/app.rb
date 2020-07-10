@@ -37,18 +37,32 @@ class App
       action = gets.chomp
       case action
       when '1' then puts Station.stringify_stations(@stations)
-      when '2' then create_stations
+      when '2' then create_stations_menu
       else
         break
       end
     end
   end
 
-  def create_stations
+  def create_stations_menu
     print 'Введите названия станций через пробел -> '
-    input = gets.chomp
-    new_stations = input.split.map { |name| Station.new(name) }
+    station_names = gets.chomp.split
+    new_stations = create_stations station_names
     @stations.push(*new_stations)
+    create_stations_feedback new_stations
+  end
+
+  def create_stations(station_names)
+    station_names.map do |name|
+      Station.new(name)
+    rescue Exception => e
+      puts e.message
+    end.compact
+  end
+
+  def create_stations_feedback(new_stations)
+    return puts 'Список новых станций пуст.' if new_stations.empty?
+
     puts 'Созданы станции:'
     puts Station.stringify_stations(new_stations)
   end
@@ -142,7 +156,7 @@ class App
       action = gets.chomp
       case action
       when '1' then puts "Поезда: #{Train.stringify_trains(@trains)}"
-      when '2' then create_trains
+      when '2' then create_trains_menu
       when '3'
         train = select_train
         train_menu(train) if train
@@ -152,23 +166,40 @@ class App
     end
   end
 
-  def create_trains
+  def create_trains_menu
     print 'Выберите тип поездов: (1) Пассажирские, (2) Грузовые (возврат назад при любом другом запросе) -> '
     type = gets.chomp
     new_trains = []
     case type
     when '1'
-      print 'Введите номера создаваемых пассажирских поездов через пробел -> '
-      input = gets.chomp
-      new_trains = input.split.map { |number| PassengerTrain.new(number) }
-      @trains.push(*new_trains)
+      numbers = request_new_train_numbers
+      new_trains = create_trains numbers, 'passenger'
     when '2'
-      print 'Введите номера создаваемых грузовых поездов через пробел -> '
-      input = gets.chomp
-      new_trains = input.split.map { |number| CargoTrain.new(number) }
-      @trains.push(*new_trains)
+      numbers = request_new_train_numbers
+      new_trains = create_trains numbers, 'cargo'
     end
-    puts 'Созданы поезда: ' + Train.stringify_trains(new_trains)
+    @trains.push(*new_trains) unless new_trains.empty?
+    create_trains_feedback new_trains
+  end
+
+  def request_new_train_numbers
+    print 'Введите номера создаваемых поездов через пробел -> '
+    gets.chomp.split
+  end
+
+  def create_trains(numbers, type)
+    train_class = type == 'cargo' ? CargoTrain : PassengerTrain
+    numbers.map do |number|
+      train_class.new number
+    rescue Exception => e
+      puts e.message
+    end.compact
+  end
+
+  def create_trains_feedback(new_trains)
+    return puts 'Новых поездов нет.' if new_trains.empty?
+
+    puts "Созданы поезда: #{Train.stringify_trains(new_trains)}"
   end
 
   def select_train
@@ -180,7 +211,7 @@ class App
 
   def train_menu(train)
     loop do
-      puts  "--- Поезд - [#{train}] ---"
+      puts  "--- Поезд - #{train} ---"
       puts  'Выберите действие, введя соотв. число.'
       puts  '(возврат назад при любом другом запросе)'
       print 'Присоединить вагон (1), открепить вагон (2), маршрут (3) -> '
@@ -197,7 +228,7 @@ class App
 
   def train_route_menu(train)
     loop do
-      puts  "--- Поезд - [#{train}] ---"
+      puts  "--- Поезд - #{train} ---"
       puts  'Выберите действие, введя соотв. число.'
       puts  '(возврат назад при любом другом запросе)'
       print 'Назначить маршрут (1), переместить по маршруту вперед (2), переместить по маршруту назад (3) -> '
@@ -205,14 +236,24 @@ class App
       case action
       when '1'
         route = select_route
-        train.accept_route route if route
-        puts "Поезд перемещен на станцию: #{train.current_station}"
+        if route
+          train.accept_route route
+          puts "Поезд перемещен на станцию: #{train.current_station}"
+        end
       when '2'
-        train.move_to_next
-        puts "Поезд перемещен на станцию: #{train.current_station}"
+        begin
+          train.move_to_next
+          puts "Поезд перемещен на станцию: #{train.current_station}"
+        rescue Exception => e
+          puts e.message
+        end
       when '3'
-        train.move_to_prev
-        puts "Поезд перемещен на станцию: #{train.current_station}"
+        begin
+          train.move_to_prev
+          puts "Поезд перемещен на станцию: #{train.current_station}"
+        rescue Exception => e
+          puts e.message
+        end
       else
         break
       end

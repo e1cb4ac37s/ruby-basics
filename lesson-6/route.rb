@@ -8,6 +8,8 @@ class Route
   end
 
   def initialize(start_station, end_station)
+    validate start_station, end_station
+
     @start_station = start_station
     @end_station = end_station
     @intermediates = []
@@ -15,11 +17,11 @@ class Route
   end
 
   def add_station(station)
-    @intermediates << station if station
+    @intermediates << station unless stations.include? station
   end
 
   def remove_station(station)
-    @intermediates.delete(station) if station
+    @intermediates.delete(station)
   end
 
   def stations
@@ -27,6 +29,13 @@ class Route
   end
 
   def to_s
-    stations.empty? ? '[]' : "[#{stations.map(&:name).join(', ')}]"
+    "[#{stations.map(&:name).join(', ')}]"
+  end
+
+  private
+
+  def validate(start_station, end_station)
+    raise 'Требуется наличие начальной и конечной станции!' if start_station.nil? || end_station.nil?
+    raise 'Начальная и конечная станция не могут совпадать!' if start_station == end_station
   end
 end

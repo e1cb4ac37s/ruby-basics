@@ -4,6 +4,8 @@ class Train
 
   attr_reader :number, :type, :speed, :prev_station, :current_station, :next_station
 
+  NUMBER_FORMAT = /^[a-zа-я\d]{3}\-?[a-zа-я\d]{2}$/i.freeze
+
   @@trains = {}
 
   def self.stringify_trains(trains)
@@ -15,6 +17,8 @@ class Train
   end
 
   def initialize(number)
+    validate number
+
     @speed = 0
     @number = number
     @wagons = []
@@ -35,24 +39,12 @@ class Train
   end
 
   def hitch_wagon(wagon)
-    if wagon.type != @type
-      puts 'Тип вагона не соответствует типу поезда...'
-      return
-    end
-
-    if speed.zero?
-      @wagons << wagon
-    else
-      puts 'Остановите поезд, прежде чем прицеплять вагоны...'
-    end
+    validate_wagon wagon
+    speed.zero? ? @wagons << wagon : false
   end
 
   def uncouple_wagon
-    if speed.zero? && @wagons.any?
-      @wagons.pop
-    else
-      puts 'Остановите поезд, прежде чем отцеплять вагоны. Или вагонов нет...'
-    end
+    speed.zero? && @wagons.any? ? @wagons.pop : false
   end
 
   def accept_route(route)
@@ -65,14 +57,8 @@ class Train
   end
 
   def move_to_next
-    unless @route
-      puts 'Поезд не привязан к маршруту.'
-      return
-    end
-    unless @next_station
-      puts 'Поезд уже на конечной станции.'
-      return
-    end
+    validate_route
+    validate_has_next
 
     @current_station.send_train(self)
 
@@ -86,14 +72,8 @@ class Train
   end
 
   def move_to_prev
-    unless @route
-      puts 'Поезд не привязан к маршруту.'
-      return
-    end
-    unless @next_station
-      puts 'Поезд уже на начальной станции.'
-      return
-    end
+    validate_route
+    validate_has_prev
 
     @current_station.send_train(self)
 
@@ -106,9 +86,42 @@ class Train
     @prev_station = @current_station_index.zero? ? nil : @route.stations[@current_station_index - 1]
   end
 
+  def cargo?
+    @type == 'cargo'
+  end
+
   private
 
   def wagons_string
     @wagons.empty? ? '[]' : "[#{@wagons.map { |_| '.' }.join}]"
+  end
+
+  def validate(number)
+    raise 'Не удалось создать поезд! Номер поезда не может быть пустым!' if number.nil? || !number.size
+    raise "Не удалось создать поезд! Номер \"#{number}\" имеет неправильный формат!" if number !~ NUMBER_FORMAT
+
+    true
+  end
+
+  def validate_route
+    raise 'Поезд не привязан к маршруту!' unless @route
+  end
+
+  def validate_has_next
+    raise 'Поезд уже на конечной станции!' unless @next_station
+  end
+
+  def validate_has_prev
+    raise 'Поезд уже на начальной станции!' unless @prev_station
+  end
+
+  def validate_wagon(wagon)
+    raise 'Тип вагона не соответствует типу поезда!' if wagon.type != @type
+  end
+
+  def valid?
+    validate
+  rescue
+    false
   end
 end

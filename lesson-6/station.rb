@@ -3,6 +3,8 @@ class Station
 
   attr_reader :trains, :name
 
+  NAME_FORMAT = /^[a-zа-я]{3,}$/i.freeze
+
   @@stations = []
 
   def self.all
@@ -18,6 +20,8 @@ class Station
   end
 
   def initialize(name)
+    validate name
+
     @name = name
     @trains = []
     @@stations << self
@@ -33,7 +37,7 @@ class Station
   end
 
   def cargo_trains
-    selection = trains.select { |t| t.type == 'cargo' }
+    selection = trains.select(&:cargo?)
     {
       trains: selection,
       count: selection.size
@@ -41,10 +45,16 @@ class Station
   end
 
   def passenger_trains
-    selection = trains.select { |t| t.type == 'passenger' }
+    selection = trains.reject(&:cargo?)
     {
       trains: selection,
       count: selection.size
     }
+  end
+
+  private
+
+  def validate(name)
+    raise "Не удалось создать станцию! Номер \"#{name}\" имеет неправильный формат!" if name !~ NAME_FORMAT
   end
 end
