@@ -33,11 +33,17 @@ class App
       puts  '--- Меню станций ---'
       puts  'Выберите действие, введя соотв. число.'
       puts  '(возврат в главное меню при любом другом запросе)'
-      print 'Действия: посмотреть список станций (1), создать станции (2) -> '
+      print 'Действия: посмотреть список станций (1), создать станции (2), список станций (другой формат) (3) -> '
       action = gets.chomp
       case action
       when '1' then puts Station.stringify_stations(@stations)
       when '2' then create_stations_menu
+      when '3'
+        @stations.each do |s|
+          puts "Название: #{s.name}"
+          puts 'Поезда:'
+          s.each_train { |t| puts "\tНомер: #{t.number}, тип: #{t.type}, кол-во вагонов: #{t.wagons.size}" }
+        end
       else
         break
       end
@@ -214,16 +220,61 @@ class App
       puts  "--- Поезд - #{train} ---"
       puts  'Выберите действие, введя соотв. число.'
       puts  '(возврат назад при любом другом запросе)'
-      print 'Присоединить вагон (1), открепить вагон (2), маршрут (3) -> '
+      print 'Меню вагона (1), маршрут (2) -> '
       action = gets.chomp
       case action
-      when '1' then train.hitch_wagon(train.type == 'cargo' ? CargoWagon.new : PassengerWagon.new)
-      when '2' then train.uncouple_wagon
-      when '3' then train_route_menu(train)
+      when '1' then wagon_menu train
+      when '2' then train_route_menu(train)
       else
         break
       end
     end
+  end
+
+  def wagon_menu(train)
+    is_passenger = train.type == 'passenger'
+    loop do
+      puts "--- Вагон поезда #{train} ---"
+      puts  'Выберите действие, введя соотв. число.'
+      puts  '(возврат назад при любом другом запросе)'
+      print 'Вывести cписок вагонов (1), прицепить вагон (2), отцепить вагон (3), заполнить вагон (4) -> '
+      action = gets.chomp
+      case action
+      when '1'
+        if is_passenger
+          train.each_wagon { |w| puts "Тип: #{w.type}, занято: #{w.passengers}, свободно: #{w.free_seats}." }
+        else
+          train.each_wagon { |w| puts "Тип: #{w.type}, загружен: #{w.occupied_volume}, свободно: #{w.available_volume}." }
+        end
+      when '2'
+        if is_passenger
+          print 'Введите вместимость пассажирского вагона -> '
+        else
+          print 'Введите объем грузового вагона -> '
+        end
+        capacity = gets.chomp.to_i
+        train.hitch_wagon(train.type == 'cargo' ? CargoWagon.new(capacity) : PassengerWagon.new(capacity))
+      when '3' then train.uncouple_wagon
+      when '4'
+        selected_wagon = select_wagon(train)
+        if is_passenger
+          selected_wagon.occupy_seat
+        else
+          print 'Введите объем -> '
+          volume = gets.chomp.to_i
+          selected_wagon.load volume
+        end
+      else
+        break
+      end
+    end
+  end
+
+  def select_wagon(train)
+    puts 'Выберите вагон из существующих:'
+    train.wagons.each.with_index(1) { |w, i| puts "(#{i}) - #{w}" }
+    selected_index = gets.chomp.to_i
+    train.wagons[selected_index - 1] if selected_index.between?(1, train.wagons.size)
   end
 
   def train_route_menu(train)

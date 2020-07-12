@@ -2,7 +2,7 @@ class Train
   include Manufacturer
   include InstanceCounter
 
-  attr_reader :number, :type, :speed, :prev_station, :current_station, :next_station
+  attr_reader :number, :type, :speed, :prev_station, :current_station, :next_station, :wagons
 
   NUMBER_FORMAT = /^[a-zа-я\d]{3}\-?[a-zа-я\d]{2}$/i.freeze
 
@@ -36,6 +36,10 @@ class Train
 
   def stop
     @speed = 0
+  end
+
+  def each_wagon
+    @wagons.each { |w| yield w }
   end
 
   def hitch_wagon(wagon)
