@@ -44,11 +44,11 @@ class Train
 
   def hitch_wagon(wagon)
     validate_wagon wagon
-    speed.zero? ? @wagons << wagon : false
+    @wagons << wagon if speed.zero?
   end
 
   def uncouple_wagon
-    speed.zero? && @wagons.any? ? @wagons.pop : false
+    @wagons.pop if speed.zero? && @wagons.any?
   end
 
   def accept_route(route)
@@ -91,7 +91,7 @@ class Train
   end
 
   def cargo?
-    @type == 'cargo'
+    instance_of? CargoTrain
   end
 
   private
