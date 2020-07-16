@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require './manufacturer'
 require './instance_counter'
 require './station'

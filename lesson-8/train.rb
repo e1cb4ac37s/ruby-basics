@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Train
   include Manufacturer
   include InstanceCounter
@@ -125,7 +127,7 @@ class Train
 
   def valid?
     validate
-  rescue
+  rescue StandardError
     false
   end
 end
