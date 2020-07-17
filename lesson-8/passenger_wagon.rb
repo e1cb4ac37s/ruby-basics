@@ -3,8 +3,8 @@
 class PassengerWagon < Wagon
   attr_reader :passengers
 
-  def initialize(type = 'passenger', capacity)
-    super type, capacity
+  def initialize(capacity, type = 'passenger')
+    super(capacity, type)
     @passengers = 0
   end
 
@@ -13,6 +13,6 @@ class PassengerWagon < Wagon
   end
 
   def free_seats
-    free_space @passengers
+    free_space(@passengers)
   end
 end

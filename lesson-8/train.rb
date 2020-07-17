@@ -45,7 +45,7 @@ class Train
   end
 
   def hitch_wagon(wagon)
-    validate_wagon wagon
+    validate_wagon(wagon)
     @wagons << wagon if speed.zero?
   end
 
@@ -122,6 +122,8 @@ class Train
   end
 
   def validate_wagon(wagon)
+    puts "Wagon #{wagon.type}"
+    puts "Train #{@type}"
     raise 'Тип вагона не соответствует типу поезда!' if wagon.type != @type
   end
 

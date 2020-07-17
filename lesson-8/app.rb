@@ -1,4 +1,27 @@
+# frozen_string_literal: true
+
 class App
+  MAIN_MENU = { '1' => :stations_menu, '2' => :trains_menu, '3' => :routes_menu }.freeze
+
+  STATIONS_MENU = { '1' => :list_stations, '2' => :create_stations_menu, '3' => :list_stations_2 }.freeze
+
+  ROUTES_MENU = { '1' => :list_routes, '2' => :create_route, '3' => :select_route_and_call_route_menu }.freeze
+
+  ROUTE_MENU = { '1' => :add_station_to_route, '2' => :remove_station_from_route, '3' => :assign_route_to_train }.freeze
+
+  TRAINS_MENU = { '1' => :list_trains, '2' => :create_trains_menu, '3' => :select_train_and_call_train_menu }.freeze
+
+  TRAIN_MENU = { '1' => :wagon_menu, '2' => :train_route_menu }.freeze
+
+  WAGON_MENU = {
+    '1' => :print_wagons,
+    '2' => :hitch_wagon,
+    '3' => :uncouple_wagon,
+    '4' => :load_wagon
+  }.freeze
+
+  TRAIN_ROUTE_MENU = { '1' => :train_accept_route, '2' => :train_to_next, '3' => :train_to_prev }.freeze
+
   def initialize
     @trains   = []
     @stations = []
@@ -18,13 +41,8 @@ class App
       puts  '(выход из программы при любом другом запросе)'
       print 'Меню: станций (1), поездов (2), маршрутов (3) -> '
       chosen_menu = gets.chomp
-      case chosen_menu
-      when '1' then stations_menu
-      when '2' then trains_menu
-      when '3' then routes_menu
-      else
-        break
-      end
+      method = MAIN_MENU[chosen_menu]
+      method ? send(method) : break
     end
   end
 
@@ -35,18 +53,20 @@ class App
       puts  '(возврат в главное меню при любом другом запросе)'
       print 'Действия: посмотреть список станций (1), создать станции (2), список станций (другой формат) (3) -> '
       action = gets.chomp
-      case action
-      when '1' then puts Station.stringify_stations(@stations)
-      when '2' then create_stations_menu
-      when '3'
-        @stations.each do |s|
-          puts "Название: #{s.name}"
-          puts 'Поезда:'
-          s.each_train { |t| puts "\tНомер: #{t.number}, тип: #{t.type}, кол-во вагонов: #{t.wagons.size}" }
-        end
-      else
-        break
-      end
+      method = STATIONS_MENU[action]
+      method ? send(method) : break
+    end
+  end
+
+  def list_stations
+    puts Station.stringify_stations(@stations)
+  end
+
+  def list_stations_2
+    @stations.each do |s|
+      puts "Название: #{s.name}"
+      puts 'Поезда:'
+      s.each_train { |t| puts "\tНомер: #{t.number}, тип: #{t.type}, кол-во вагонов: #{t.wagons.size}" }
     end
   end
 
@@ -61,7 +81,7 @@ class App
   def create_stations(station_names)
     station_names.map do |name|
       Station.new(name)
-    rescue Exception => e
+    rescue StandardError => e
       puts e.message
     end.compact
   end
@@ -80,31 +100,28 @@ class App
       puts  '(возврат в главное меню при любом другом запросе)'
       print 'Действия: показать маршруты (1), создать маршрут (2), выбрать маршрут (3) -> '
       action = gets.chomp
-      case action
-      when '1' then puts "Маршруты: #{Route.stringify_routes(@routes)}"
-      when '2' then create_route
-      when '3'
-        route = select_route
-        route_menu(route) if route
-      else
-        break
-      end
+      method = ROUTES_MENU[action]
+      method ? send(method) : break
     end
   end
 
+  def list_routes
+    puts "Маршруты: #{Route.stringify_routes(@routes)}"
+  end
+
+  def select_route_and_call_route_menu
+    route = select_route
+    route_menu(route) if route
+  end
+
   def create_route
-    if @stations.size < 2
-      puts 'Для создания маршрута необходимо минимум 2 станции.'
-      return
-    end
+    return puts 'Для создания маршрута необходимо минимум 2 станции.' if @stations.size < 2
 
     puts 'Создаем маршрут, выберите начальную станцию.'
     start_station = select_station(@stations)
     end_station = select_station(@stations.reject { |s| s == start_station })
-    if !start_station || !end_station
-      puts 'Вы не выбрали стартовую или конечную станцию (или обе), маршрут не будет создан...'
-      return
-    end
+    return puts 'Не выбрана стартовая/конечная станция, маршрут не будет создан.' unless start_station && end_station
+
     @routes << Route.new(start_station, end_station)
   end
 
@@ -122,27 +139,28 @@ class App
       puts  '(возврат в назад при любом другом запросе)'
       print 'Добавить станцию (1), удалить станцию (2), назначить поезду (3) -> '
       action = gets.chomp
-      case action
-      when '1'
-        station = select_station(@stations, route.stations)
-        route.add_station station
-      when '2'
-        if route.stations.size == 2
-          puts 'У маршрута нет промежуточных станций, которые можно удалить.'
-        else
-          station = select_station(route.stations[1...-1]) # we don't touch start/end stations, those are core of route
-          route.remove_station station
-        end
-      when '3'
-        train = select_train
-        if train
-          train.accept_route route
-          puts "Поезду: #{train} назначен маршрут #{route}."
-        end
-      else
-        break
-      end
+      method = ROUTE_MENU[action]
+      method ? send(method, route) : break
     end
+  end
+
+  def add_station_to_route(route)
+    station = select_station(@stations, route.stations)
+    route.add_station station
+  end
+
+  def remove_station_from_route(route)
+    return puts 'У маршрута нет промежуточных станций, которые можно удалить.' if route.stations.size == 2
+
+    route.remove_station(select_station(route.stations[1...-1])) # exclude start/end stations, those are route's core
+  end
+
+  def assign_route_to_train(route)
+    train = select_train
+    return unless train
+
+    train.accept_route(route)
+    puts "Поезду: #{train} назначен маршрут #{route}."
   end
 
   def select_station(from, except = [])
@@ -160,32 +178,31 @@ class App
       puts  '(возврат в главное меню при любом другом запросе)'
       print 'Действия: показать все поезда (1), создать поезда (2), выбрать поезд (3) -> '
       action = gets.chomp
-      case action
-      when '1' then puts "Поезда: #{Train.stringify_trains(@trains)}"
-      when '2' then create_trains_menu
-      when '3'
-        train = select_train
-        train_menu(train) if train
-      else
-        break
-      end
+      method = TRAINS_MENU[action]
+      method ? send(method) : break
     end
+  end
+
+  def list_trains
+    puts "Поезда: #{Train.stringify_trains(@trains)}"
+  end
+
+  def select_train_and_call_train_menu
+    train = select_train
+    train_menu(train) if train
   end
 
   def create_trains_menu
     print 'Выберите тип поездов: (1) Пассажирские, (2) Грузовые (возврат назад при любом другом запросе) -> '
-    type = gets.chomp
-    new_trains = []
-    case type
-    when '1'
-      numbers = request_new_train_numbers
-      new_trains = create_trains numbers, 'passenger'
-    when '2'
-      numbers = request_new_train_numbers
-      new_trains = create_trains numbers, 'cargo'
-    end
+    input = gets.chomp
+    train_types_hash = { '1' => 'passenger', '2' => 'cargo' }
+    type = train_types_hash[input]
+    return if type.nil?
+
+    numbers = request_new_train_numbers
+    new_trains = create_trains(numbers, type)
     @trains.push(*new_trains) unless new_trains.empty?
-    create_trains_feedback new_trains
+    create_trains_feedback(new_trains)
   end
 
   def request_new_train_numbers
@@ -197,7 +214,7 @@ class App
     train_class = type == 'cargo' ? CargoTrain : PassengerTrain
     numbers.map do |number|
       train_class.new number
-    rescue Exception => e
+    rescue StandardError => e
       puts e.message
     end.compact
   end
@@ -222,51 +239,53 @@ class App
       puts  '(возврат назад при любом другом запросе)'
       print 'Меню вагона (1), маршрут (2) -> '
       action = gets.chomp
-      case action
-      when '1' then wagon_menu train
-      when '2' then train_route_menu(train)
-      else
-        break
-      end
+      method = TRAIN_MENU[action]
+      method ? send(method, train) : break
     end
   end
 
   def wagon_menu(train)
-    is_passenger = train.type == 'passenger'
     loop do
       puts "--- Вагон поезда #{train} ---"
       puts  'Выберите действие, введя соотв. число.'
       puts  '(возврат назад при любом другом запросе)'
       print 'Вывести cписок вагонов (1), прицепить вагон (2), отцепить вагон (3), заполнить вагон (4) -> '
       action = gets.chomp
-      case action
-      when '1'
-        if is_passenger
-          train.each_wagon { |w| puts "Тип: #{w.type}, занято: #{w.passengers}, свободно: #{w.free_seats}." }
-        else
-          train.each_wagon { |w| puts "Тип: #{w.type}, загружен: #{w.occupied_volume}, свободно: #{w.available_volume}." }
-        end
-      when '2'
-        if is_passenger
-          print 'Введите вместимость пассажирского вагона -> '
-        else
-          print 'Введите объем грузового вагона -> '
-        end
-        capacity = gets.chomp.to_i
-        train.hitch_wagon(train.type == 'cargo' ? CargoWagon.new(capacity) : PassengerWagon.new(capacity))
-      when '3' then train.uncouple_wagon
-      when '4'
-        selected_wagon = select_wagon(train)
-        if is_passenger
-          selected_wagon.occupy_seat
-        else
-          print 'Введите объем -> '
-          volume = gets.chomp.to_i
-          selected_wagon.load volume
-        end
-      else
-        break
-      end
+      method = WAGON_MENU[action]
+      method ? send(method, train) : break
+    end
+  end
+
+  def print_wagons(train)
+    if train.cargo?
+      train.each_wagon { |w| puts "Тип: #{w.type}, загружен: #{w.occupied_volume}, свободно: #{w.available_volume}." }
+    else
+      train.each_wagon { |w| puts "Тип: #{w.type}, занято: #{w.passengers}, свободно: #{w.free_seats}." }
+    end
+  end
+
+  def hitch_wagon(train)
+    if train.cargo?
+      print 'Введите объем грузового вагона -> '
+    else
+      print 'Введите вместимость пассажирского вагона -> '
+    end
+    capacity = gets.chomp.to_i
+    train.hitch_wagon(train.cargo? ? CargoWagon.new(capacity) : PassengerWagon.new(capacity))
+  end
+
+  def uncouple_wagon(train)
+    train.uncouple_wagon
+  end
+
+  def load_wagon(train)
+    selected_wagon = select_wagon(train)
+    if train.cargo?
+      print 'Введите объем -> '
+      volume = gets.chomp.to_i
+      selected_wagon.load volume
+    else
+      selected_wagon.occupy_seat
     end
   end
 
@@ -284,30 +303,30 @@ class App
       puts  '(возврат назад при любом другом запросе)'
       print 'Назначить маршрут (1), переместить по маршруту вперед (2), переместить по маршруту назад (3) -> '
       action = gets.chomp
-      case action
-      when '1'
-        route = select_route
-        if route
-          train.accept_route route
-          puts "Поезд перемещен на станцию: #{train.current_station}"
-        end
-      when '2'
-        begin
-          train.move_to_next
-          puts "Поезд перемещен на станцию: #{train.current_station}"
-        rescue Exception => e
-          puts e.message
-        end
-      when '3'
-        begin
-          train.move_to_prev
-          puts "Поезд перемещен на станцию: #{train.current_station}"
-        rescue Exception => e
-          puts e.message
-        end
-      else
-        break
-      end
+      method = TRAIN_ROUTE_MENU[action]
+      method ? send(method, train) : break
     end
+  end
+
+  def train_accept_route(train)
+    route = select_route
+    return nil unless route
+
+    train.accept_route route
+    puts "Поезд перемещен на станцию: #{train.current_station}"
+  end
+
+  def train_to_next(train)
+    train.move_to_next
+    puts "Поезд перемещен на станцию: #{train.current_station}"
+  rescue StandardError => e
+    puts e.message
+  end
+
+  def train_to_prev(train)
+    train.move_to_prev
+    puts "Поезд перемещен на станцию: #{train.current_station}"
+  rescue StandardError => e
+    puts e.message
   end
 end

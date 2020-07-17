@@ -3,8 +3,8 @@
 class CargoWagon < Wagon
   attr_reader :occupied_volume
 
-  def initialize(type = 'cargo', capacity)
-    super type, capacity
+  def initialize(capacity, type = 'cargo')
+    super(capacity, type)
     @occupied_volume = 0
   end
 

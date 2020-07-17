@@ -4,7 +4,7 @@ class Wagon
   include Manufacturer
   attr_reader :type
 
-  def initialize(type, capacity)
+  def initialize(capacity, type)
     @type = type
     @capacity = capacity
   end
