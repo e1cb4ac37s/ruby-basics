@@ -3,10 +3,16 @@
 class Train
   include Manufacturer
   include InstanceCounter
+  include Validation
+  extend Accessors
 
-  attr_reader :number, :type, :speed, :prev_station, :current_station, :next_station, :wagons
+  attr_reader :type, :speed, :prev_station, :current_station, :next_station, :wagons
+  strong_attr_accessor :number, String
 
   NUMBER_FORMAT = /^[a-zа-я\d]{3}\-?[a-zа-я\d]{2}$/i.freeze
+
+  validate :number, :presence
+  validate :number, :format, NUMBER_FORMAT
 
   @@trains = {}
 
@@ -19,11 +25,10 @@ class Train
   end
 
   def initialize(number)
-    validate number
-
     @speed = 0
     @number = number
     @wagons = []
+    validate!
     @@trains[number] = self
     register_instance
   end
@@ -102,13 +107,6 @@ class Train
     @wagons.empty? ? '[]' : "[#{@wagons.map { |_| '.' }.join}]"
   end
 
-  def validate(number)
-    raise 'Не удалось создать поезд! Номер поезда не может быть пустым!' if number.nil? || !number.size
-    raise "Не удалось создать поезд! Номер \"#{number}\" имеет неправильный формат!" if number !~ NUMBER_FORMAT
-
-    true
-  end
-
   def validate_route
     raise 'Поезд не привязан к маршруту!' unless @route
   end
@@ -122,14 +120,6 @@ class Train
   end
 
   def validate_wagon(wagon)
-    puts "Wagon #{wagon.type}"
-    puts "Train #{@type}"
     raise 'Тип вагона не соответствует типу поезда!' if wagon.type != @type
-  end
-
-  def valid?
-    validate
-  rescue StandardError
-    false
   end
 end

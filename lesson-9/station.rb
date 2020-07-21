@@ -2,10 +2,13 @@
 
 class Station
   include InstanceCounter
+  include Validation
 
   attr_reader :trains, :name
 
   NAME_FORMAT = /^[a-zа-я]{3,}$/i.freeze
+
+  validate :name, :format, NAME_FORMAT
 
   @@stations = []
 
@@ -22,10 +25,9 @@ class Station
   end
 
   def initialize(name)
-    validate name
-
     @name = name
     @trains = []
+    validate!
     @@stations << self
     register_instance
   end
@@ -56,11 +58,5 @@ class Station
       trains: selection,
       count: selection.size
     }
-  end
-
-  private
-
-  def validate(name)
-    raise "Не удалось создать станцию! Номер \"#{name}\" имеет неправильный формат!" if name !~ NAME_FORMAT
   end
 end

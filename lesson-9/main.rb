@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require './accessors'
+require './validation'
 require './manufacturer'
 require './instance_counter'
 require './station'
