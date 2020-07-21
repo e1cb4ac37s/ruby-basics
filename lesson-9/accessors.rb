@@ -11,7 +11,7 @@ module Accessors
 
       define_method("#{attr}=") do |v|
         history = instance_variable_get(attr_history)
-        history.nil? ? instance_variable_set(attr_history, [v]) : history << v
+        history.nil? ? instance_variable_set(attr_history, []) : history << instance_variable_get("@#{attr}")
 
         instance_variable_set("@#{attr}", v)
       end

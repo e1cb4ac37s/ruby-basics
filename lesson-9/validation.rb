@@ -8,9 +8,8 @@ module Validation
     attr_accessor :validators
 
     def validate attr, validation_type, param = nil
-      @validators ||= {}
-      @validators[attr] ||= []
-      @validators[attr] << [validation_type, param]
+      @validators ||= []
+      @validators << { attr: attr, validation_type: validation_type, param: param }
     end
   end
 
@@ -25,9 +24,11 @@ module Validation
     private
 
     def validate!
-      validators = self.class.validators
-      validators.each do |attr, validations|
-        validations.each { |v| self.send "_validate_#{v[0]}", attr, instance_variable_get("@#{attr}"), v[1] }
+      self.class.validators.each do |v|
+        send "_validate_#{v[:validation_type]}",
+             v[:attr],
+             instance_variable_get("@#{v[:attr]}"),
+             v[:param]
       end
     end
 

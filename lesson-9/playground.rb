@@ -29,4 +29,3 @@ puts o.b
 o.b = 3
 o.b = 4
 puts o.inspect
-
